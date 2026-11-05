@@ -34,14 +34,14 @@ import time
 import cv2
 import numpy as np
 
-from filters import crimson_grin, gold_crown, robot_circuits, royal_crown
+from filters import batman_mask, gold_crown, robot_circuits, royal_crown
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(HERE, "assets")
 MODEL_PATH = os.path.join(HERE, "face_detection_yunet_2023mar.onnx")
 
 # Order of the tiles on the menu
-FILTERS = [crimson_grin, royal_crown, robot_circuits, gold_crown]
+FILTERS = [batman_mask, royal_crown, robot_circuits, gold_crown]
 
 # ------------------------------------------------------------------ settings
 # Session (the same for every filter - only the filter itself is different)
