@@ -1,5 +1,6 @@
-"""Run this ONCE (with internet) if face_detection_yunet_2023mar.onnx is missing.
-It only downloads the face model file. The kiosk itself never uses the network."""
+"""Run this ONCE (with internet) to get the two face model files
+(YuNet for everyone, MediaPipe face mesh for the Crimson Grin).
+It only downloads model files. The kiosk itself never uses the network."""
 import os
 import urllib.request
 
@@ -14,3 +15,13 @@ else:
     print("Downloading YuNet face model...")
     urllib.request.urlretrieve(URL, PATH)
     print("Done:", PATH)
+
+MESH_PATH = os.path.join(HERE, "face_landmarker.task")
+MESH_URL = ("https://storage.googleapis.com/mediapipe-models/face_landmarker/"
+            "face_landmarker/float16/1/face_landmarker.task")
+if os.path.exists(MESH_PATH) and os.path.getsize(MESH_PATH) > 1_000_000:
+    print("Model is already here:", MESH_PATH)
+else:
+    print("Downloading MediaPipe face mesh model...")
+    urllib.request.urlretrieve(MESH_URL, MESH_PATH)
+    print("Done:", MESH_PATH)

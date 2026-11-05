@@ -34,15 +34,15 @@ import time
 import cv2
 import numpy as np
 
-from filters import batman_mask, gold_crown, robot_circuits, royal_crown
+import face_mesh
+from filters import crimson_grin, gold_crown, robot_circuits, royal_crown
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ASSETS = os.path.join(HERE, "assets")
 MODEL_PATH = os.path.join(HERE, "face_detection_yunet_2023mar.onnx")
 
 # Order of the tiles on the menu
-FILTERS = [batman_mask, royal_crown, robot_circuits, gold_crown]
-
+FILTERS = [crimson_grin, royal_crown, robot_circuits, gold_crown]
 # ------------------------------------------------------------------ settings
 # Session (the same for every filter - only the filter itself is different)
 SESSION_SECONDS = 30     # Pavan's stories: "wearing a virtual crown for 30 seconds"
@@ -157,8 +157,11 @@ def facing_camera(face):
 
 class Track:
     """One person's face, remembered from frame to frame."""
+    next_id = 0                   # every new face gets its own number
 
     def __init__(self, points, now):
+        Track.next_id += 1
+        self.id = Track.next_id       # lets face_mesh.py keep each person's points apart
         self.points = points          # smoothed YuNet numbers (first 14) - used for drawing
         self.raw = points             # last real detection - used for matching
         self.last_seen = now
@@ -234,8 +237,12 @@ class FaceTracker:
     def shown_faces(self):
         shown = [t for t in self.tracks if t.shown]
         shown.sort(key=lambda t: -t.points[2])       # biggest (closest) first
-        return [make_face(t.points) for t in shown[:MAX_FACES]]
-
+        faces = []
+        for t in shown[:MAX_FACES]:
+            face = make_face(t.points)
+            face["id"] = t.id
+            faces.append(face)
+        return faces
 
 def reveal_faces(camera_frame, output, faces):
     """Copy ONLY soft ovals around the shown faces from the camera onto the
@@ -392,8 +399,7 @@ class Kiosk:
                                                   score_threshold=SCORE_THRESHOLD)
         self.images = [load_png(f) for f in FILTERS]
         self.previews = [make_preview(f, img) for f, img in zip(FILTERS, self.images)]
-        self.tracker = FaceTracker()
-        self.cap = None
+        self.mesh = face_mesh.FaceMesh(MAX_FACES)     # extra face points for filters that want them        self.cap = None
         self.state = "MENU"
         self.state_since = clock()
         self.choice = 0
@@ -439,6 +445,7 @@ class Kiosk:
             self.cap.release()
             self.cap = None
         self.tracker.clear()
+        self.mesh.close()                                # forget every face's points too
         self.last_output = None
         self.faces_shown = 0
         self.show_switch = False
@@ -461,6 +468,8 @@ class Kiosk:
         output = np.zeros_like(frame)                    # start from a BLACK screen
         reveal_faces(frame, output, faces)               # only zone faces show through
         filt, img = FILTERS[self.choice], self.images[self.choice]
+        if getattr(filt, "USES_MESH", False):
+            self.mesh.add_points(frame, faces, self.clock())   # adds face["mesh"] (478 points)
         for face in faces:
             output = filt.draw(output, face, img)
         if self.debug:
