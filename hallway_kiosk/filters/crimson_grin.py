@@ -26,7 +26,7 @@ NAME = "Crimson Grin"
 OWNER = "Abhi"
 PNG = "smile_filter.png"
 
-SMILE_SCALE = 1.7   # grin width = mouth width * this (same as Abhi's original)
+SMILE_SCALE = 1.7   # grin width = mouth width * this (same as your original)
 MOUTH_Y = 0.50      # where the lips meet in the PNG (0 = top, 1 = bottom)
 MAX_TURN = 0.30     # hide if the nose is this close to one eye (0.5 = looking straight)
 
